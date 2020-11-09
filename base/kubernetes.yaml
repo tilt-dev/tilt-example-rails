@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-rails
+  labels:
+    app: example-rails
+spec:
+  selector:
+    matchLabels:
+      app: example-rails
+  template:
+    metadata:
+      labels:
+        app: example-rails
+    spec:
+      containers:
+        - name: example-rails
+          image: example-rails-image
+          ports:
+            - containerPort: 8000
