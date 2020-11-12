@@ -1,7 +1,7 @@
-FROM ruby:2.5.8
+FROM ruby:2.5.8-alpine3.12
 
-RUN apt-get update -qq && apt-get install -y nodejs npm
-RUN npm install --global yarn
+#RUN apt-get update -qq && apt-get install -y nodejs npm
+RUN apk add --update build-base yarn sqlite-dev tzdata
 
 WORKDIR /app
 
