@@ -18,5 +18,5 @@ k8s_yaml('kubernetes.yaml')
 k8s_resource('example-rails', port_forwards=8000,
              resource_deps=['deploy'])
 
-local_resource('copyback', 'kubectl exec deployment/example-rails -- tar cf - Gemfile.lock yarn.lock migrations/ | tar xf -',
+local_resource('syncback', 'kubectl exec deployment/example-rails -- tar cf - Gemfile.lock yarn.lock migrations/ | tar xf -',
                trigger_mode=TRIGGER_MODE_MANUAL, auto_init=False)
