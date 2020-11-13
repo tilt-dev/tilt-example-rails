@@ -1,0 +1,22 @@
+# -*- mode: Python -*-
+
+# Records the current time, then kicks off a server update.
+# Normally, you would let Tilt do deploys automatically, but this
+# shows you how to set up a custom workflow that measures it.
+local_resource(
+    'deploy',
+    'ruby now.rb > start-time.txt',
+)
+
+docker_build('example-rails-image', '.',
+             live_update=[
+                 sync('.', '/app'),
+                 run('bundle install', trigger=['Gemfile', 'Gemfile.lock']),
+                 run('yarn install', trigger=['package.json', 'yarn.lock']),
+             ])
+k8s_yaml('kubernetes.yaml')
+k8s_resource('example-rails', port_forwards=8000,
+             resource_deps=['deploy'])
+
+local_resource('copyback', 'kubectl exec deployment/example-rails -- tar cf - Gemfile.lock yarn.lock migrations/ | tar xf -',
+               trigger_mode=TRIGGER_MODE_MANUAL, auto_init=False)
