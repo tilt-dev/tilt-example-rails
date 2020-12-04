@@ -1,5 +1,7 @@
 # -*- mode: Python -*-
 
+load('ext://syncback', 'syncback')
+
 # Records the current time, then kicks off a server update.
 # Normally, you would let Tilt do deploys automatically, but this
 # shows you how to set up a custom workflow that measures it.
@@ -18,36 +20,4 @@ k8s_yaml('kubernetes.yaml')
 k8s_resource('example-rails', port_forwards=8000,
              resource_deps=['deploy'])
 
-def syncback(name, k8s_identifier, paths, ignores=None, target_dir='.'):
-    # name (str) = resource name
-    # k8s_identifier (str) = thing to exec on (pod, deployment/blah, etc)
-    # paths (List[str]) = paths ON CONTAINER to sync. May be files or dirs. May be absolute, or releative to working dir of container
-    # target_dir (str) = dir on local FS to copy files back to (maybe abs or relative to Tiltfile)
-    if ignores == None:
-        ignores = []
-
-    lockfile = '/tmp/{}-lock.tilt'.format(name)
-    paths_str = ' '.join(paths)
-    # ignores_str = '\n'.join([r'-not \( -path {} -prune \) \\'.format(ignore) for ignore in ignores])
-    tar_files_script = shlex.quote(r"""find {paths} \
--not \( -path ./.git -prune \) \
--not \( -path ./node_modules -prune \) \
--type f \
--newer {lockfile} \
--print | tar cf - -T -""".format(paths=paths_str, lockfile=lockfile))
-#
-# && touch {lockfile}""".format(paths=paths_str, ignores=ignores_str, lockfile=lockfile)
-
-    local_resource(name, "kubectl exec {k8s_id} -- /bin/sh -c {script} | tar xf - -C {target_dir}".
-                   format(k8s_id=k8s_identifier, script=tar_files_script, target_dir=target_dir),
-                   trigger_mode=TRIGGER_MODE_MANUAL, auto_init=False)
-
-    script = 'echo $(hostname)'
-    local_resource('diagnose', "kubectl exec {k8s_id} -- /bin/sh -c '{s}'".format(k8s_id=k8s_identifier, s=script))
-
-### UNSUPPORTED CASES/TODO:
-# path deleted on container (or renamed)
-# path to syncback DNE (e.g. try to tar /migrations dir before it exists)
-# if something goes wrong in tarring, whole cmd doesn't necessarily fail
-
-syncback('syncback-rails', 'deployment/example-rails', ['Gemfile.lock', 'yarn.lock', 'app/', 'test/'])
+syncback('syncback-rails', 'example-rails', ['Gemfile.lock', 'yarn.lock', 'app/', 'test/'])
