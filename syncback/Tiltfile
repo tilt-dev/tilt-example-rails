@@ -20,4 +20,4 @@ k8s_yaml('kubernetes.yaml')
 k8s_resource('example-rails', port_forwards=8000,
              resource_deps=['deploy'])
 
-syncback('syncback-rails', 'example-rails', ['Gemfile.lock', 'yarn.lock', 'app/', 'test/'])
+syncback('syncback-rails', 'deploy/example-rails', ['Gemfile.lock', 'yarn.lock', 'app/', 'test/'], '/app/')
